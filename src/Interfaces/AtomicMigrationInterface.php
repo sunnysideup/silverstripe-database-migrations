@@ -4,5 +4,5 @@ namespace Sunnysideup\DatabaseMigrations\Interfaces;
 
 interface AtomicMigrationInterface
 {
-    public function CanRunAgainOnFailure(): bool;
+    public function canRunAgainOnFailure(): bool;
 }

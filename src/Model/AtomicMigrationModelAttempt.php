@@ -2,64 +2,85 @@
 
 namespace Sunnysideup\DatabaseMigrations\Model;
 
+use SilverStripe\ORM\DataObject;
+use Sunnysideup\DatabaseMigrations\Traits\AtomicMigrationModelTrait;
+
 class AtomicMigrationModelAttempt extends DataObject
 {
     use AtomicMigrationModelTrait;
-    public static function start_new_attempt(AtomicMigrationModel $model)
+
+    private static string $table_name = 'AtomicMigrationModelAttempt';
+
+    private static array $db = [
+        'FileHash' => 'Varchar',
+        'Successful' => 'Boolean',
+        'Completed' => 'Boolean',
+        'ErrorMessage' => 'Text',
+    ];
+
+    private static array $has_one = [
+        'Task' => AtomicMigrationModel::class,
+    ];
+
+    private static array $casting = [
+        'Title' => 'Varchar',
+        'IsCurrent' => 'Boolean',
+    ];
+
+    private static array $summary_fields = [
+        'Created' => 'Date',
+        'Title' => 'Title',
+        'Successful' => 'Success',
+        'IsCurrent' => 'Current',
+    ];
+
+    public static function start_new_attempt(AtomicMigrationModel $model): self
     {
-        $me = AtomicMigrationModelAttempt::create();
+        $me = static::create();
         $me->TaskID = $model->ID;
         $me->write();
+
         return $me;
     }
 
-    private static $db = [
-        'FileHash' => 'Varchar',
-        'Successful' => 'Boolean',
-        'Completed' => 'Boolean'
-    ];
-
-    private static $has_one = [
-        'Task' => AtomicMigrationModel::class
-    ];
-
-    private static $casting = [
-        'Title' => 'Varchar',
-        'IsCurrent' => 'Boolean'
-    ];
-
-    public function getTitle()
+    public function getTitle(): string
     {
-        return
-            $this->Task()?->Title .
-            ' ' . ($this->Successful ? 'Successful' : ($this->Completed ? 'Failed' : 'Incomplete')) .
-            ' ' . ($this->getIsCurrent() ? '(Current)' : '(Outdated)');
+        $task = $this->Task();
+        $title = $task ? $task->Title : 'Unknown Task';
+        $status = $this->Successful ? 'Successful' : ($this->Completed ? 'Failed' : 'Incomplete');
+        $currency = $this->getIsCurrent() ? '(Current)' : '(Outdated)';
+
+        return sprintf('%s - %s %s', $title, $status, $currency);
     }
 
-    public function getIsCurrent()
+    public function getIsCurrent(): bool
     {
-        return $this->Task()?->getCurrentHash() === $this->FileHash;
+        $task = $this->Task();
+
+        return $task && $task->getCurrentHash() === $this->FileHash;
     }
 
-    public function canCreate($member, $context = [])
-    {
-        return false;
-    }
-    public function canEdit($member)
+    public function canCreate($member = null, $context = []): bool
     {
         return false;
     }
 
-    public function canDelete($member)
+    public function canEdit($member = null, $context = []): bool
     {
         return false;
     }
 
-    public function onBeforeWrite()
+    public function canDelete($member = null): bool
+    {
+        return false;
+    }
+
+    public function onBeforeWrite(): void
     {
         parent::onBeforeWrite();
         if (! $this->FileHash) {
-            $this->FileHash = (string) $this->Task()?->getCurrentHash();
+            $task = $this->Task();
+            $this->FileHash = $task ? $task->getCurrentHash() : '';
         }
     }
 }

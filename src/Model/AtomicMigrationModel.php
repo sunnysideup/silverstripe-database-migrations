@@ -2,63 +2,80 @@
 
 namespace Sunnysideup\DatabaseMigrations\Model;
 
-use Sunnysideup\DatabaseMigrations\Interfaces\AtomicMigrationApi;
 use Exception;
+use SilverStripe\Forms\ReadonlyField;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\FieldType\DBField;
+use Sunnysideup\DatabaseMigrations\Api\AtomicMigrationApi;
 use Sunnysideup\DatabaseMigrations\Interfaces\AtomicMigrationInterface;
+use Sunnysideup\DatabaseMigrations\Traits\AtomicMigrationModelTrait;
 
 class AtomicMigrationModel extends DataObject
 {
     use AtomicMigrationModelTrait;
-    public static function find_or_create(string $className): static
-    {
-        $filter = ['TaskClassName' => $className];
-        $model = AtomicMigrationModel::get()->filter($filter)->first();
-        if (!$model) {
-            $model = AtomicMigrationModel::create($filter);
-            $model->write();
-        }
-        return $model;
-    }
-    private static $db = [
+
+    private static string $table_name = 'AtomicMigrationModel';
+
+    private static array $db = [
         'Title' => 'Varchar',
         'TaskClassName' => 'Varchar(255)',
         'Description' => 'Text',
-        'URLSegment' => 'Varchar'
+        'URLSegment' => 'Varchar',
+        'CurrentHash' => 'Varchar',
     ];
 
-    private static $has_many = [
-        'Attempts' => AtomicMigrationModelRunAttempt::class
+    private static array $has_many = [
+        'Attempts' => AtomicMigrationModelAttempt::class,
     ];
 
-    private static $casting = [
+    private static array $casting = [
         'NumberOfAttempts' => 'Int',
         'HasRun' => 'Boolean',
         'HasRunSuccessfully' => 'Boolean',
         'HasRunWithCurrentClassConfiguration' => 'Boolean',
         'HasRunSuccessfullyWithCurrentClassConfiguration' => 'Boolean',
-        'CurrentHash' => 'Varchar',
     ];
 
-    private static $indexes = [
+    private static array $indexes = [
         'URLSegment' => true,
         'TaskClassName' => true,
     ];
 
-    public function canCreate($member, $context = [])
+    private static array $summary_fields = [
+        'Title' => 'Title',
+        'TaskClassName' => 'Task Class',
+        'HasRunSuccessfully' => 'Successful',
+        'NumberOfAttempts' => 'Attempts',
+    ];
+
+    public static function find_or_create(string $className): self
     {
-        return false;
+        $filter = ['TaskClassName' => $className];
+        $model = self::get()->filter($filter)->first();
+        if (! $model) {
+            $model = self::create($filter);
+            $model->write();
+        }
+
+        return $model;
     }
-    public function canEdit($member)
+
+    public function canCreate($member = null, $context = []): bool
     {
         return false;
     }
 
-    public function canDelete($member)
+    public function canEdit($member = null, $context = []): bool
     {
         return false;
     }
 
-    public function requireDefaultRecords()
+    public function canDelete($member = null): bool
+    {
+        return false;
+    }
+
+    public function requireDefaultRecords(): void
     {
         parent::requireDefaultRecords();
         $list = AtomicMigrationApi::inst()->getListOfMigrationTasks();
@@ -68,31 +85,27 @@ class AtomicMigrationModel extends DataObject
             if ($model->getHasRunSuccessfullyWithCurrentClassConfiguration() === true) {
                 continue;
             }
-            if ($model instanceof AtomicMigrationInterface && !$model->CanRunAgainOnFailure()) {
+            if ($task instanceof AtomicMigrationInterface && ! $task->canRunAgainOnFailure()) {
                 continue;
             }
             $attempt = AtomicMigrationModelAttempt::start_new_attempt($model);
             try {
                 $task->run(null);
                 $attempt->Successful = true;
+                $attempt->Completed = true;
             } catch (Exception $e) {
                 $attempt->ErrorMessage = $e->getMessage();
-
-                // Handle exception if needed
+                $attempt->Completed = true;
             }
             $attempt->write();
-
-
         }
     }
 
-    public function onBeforeWrite()
+    public function onBeforeWrite(): void
     {
         parent::onBeforeWrite();
-        $path = AtomicMigrationApi::inst()->ClassNameToPath($this->TaskClassName);
         $this->CurrentHash = $this->getCurrentHash();
     }
-
 
     public function getNumberOfAttempts(): int
     {
@@ -103,14 +116,17 @@ class AtomicMigrationModel extends DataObject
     {
         return $this->Attempts()->exists();
     }
+
     public function getHasRunSuccessfully(): bool
     {
         return $this->Attempts()->filter(['Successful' => true])->exists();
     }
+
     public function getHasRunWithCurrentClassConfiguration(): bool
     {
-        return $this->Attempts()->filter(['FileHash' => $this->CurrentHash])->exists();
+        return $this->Attempts()->filter(['FileHash' => $this->getCurrentHash()])->exists();
     }
+
     public function getHasRunSuccessfullyWithCurrentClassConfiguration(): bool
     {
         return $this->Attempts()->filter(['FileHash' => $this->getCurrentHash(), 'Successful' => true])->exists();
@@ -118,28 +134,11 @@ class AtomicMigrationModel extends DataObject
 
     public function getCurrentHash(): string
     {
-        $file = AtomicMigrationApi::inst()->ClassNameToPath($this->TaskClassName);
-        return md5($file);
-    }
-
-    public function getCMSFields()
-    {
-        $fields = parent::getCMSFields();
-        foreach ($this->config()->casting as $fieldName => $fieldType) {
-            $method = 'get' . $fieldName;
-            $value = $this->$method();
-            $fields->addFieldsToTab(
-                'Root.Main',
-                [
-                    ReadonlyField::create(
-                        $fieldName . 'Nice',
-                        $fieldName,
-                        DBField::create_field($fieldType, $value)->Nice()
-                    )
-                ]
-            );
+        $file = AtomicMigrationApi::inst()->classNameToPath($this->TaskClassName);
+        if (! $file || ! file_exists($file)) {
+            return '';
         }
-        return $fields;
-    }
 
+        return md5_file($file);
+    }
 }

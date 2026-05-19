@@ -1,8 +1,14 @@
 <?php
 
-namespace Sunnysideup\DatabaseMigrations\Interfaces;
+namespace Sunnysideup\DatabaseMigrations\Api;
 
+use SilverStripe\Core\ClassInfo;
+use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Extensible;
+use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Manifest\ClassLoader;
+use Sunnysideup\DatabaseMigrations\Interfaces\AtomicMigrationInterface;
 use Sunnysideup\DatabaseMigrations\Model\AtomicMigrationModel;
 
 class AtomicMigrationApi
@@ -11,17 +17,15 @@ class AtomicMigrationApi
     use Configurable;
     use Extensible;
 
-    private static array $also_run = [
-
-    ];
+    private static array $also_run = [];
 
     public function getListOfMigrationTasks(): array
     {
         $array = [];
-        $list = ClassInfo::implements(AtomicMigrationInterface::class);
+        $list = ClassInfo::implementorsOf(AtomicMigrationInterface::class);
         $list = array_merge(
             $list,
-            $this->Config()->also_run
+            $this->config()->get('also_run') ?? []
         );
         foreach ($list as $className) {
             $task = Injector::inst()->get($className);
@@ -32,17 +36,19 @@ class AtomicMigrationApi
                 'Task' => $task,
             ];
         }
+
         return $array;
     }
 
-    public static function inst(): AtomicMigrationApi
+    public static function inst(): self
     {
         return Injector::inst()->get(static::class);
     }
 
-    public function ClassNameToPath(string $className): ?string
+    public function classNameToPath(string $className): ?string
     {
         $path = ClassLoader::inst()->getManifest()->getItemPath($className);
+
         return $path ?: null;
     }
 }

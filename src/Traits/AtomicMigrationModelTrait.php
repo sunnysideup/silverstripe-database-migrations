@@ -2,17 +2,26 @@
 
 namespace Sunnysideup\DatabaseMigrations\Traits;
 
-use Sunnysideup\DatabaseMigrations\Interfaces\AtomicMigrationApi;
-use Exception;
-use Sunnysideup\DatabaseMigrations\Interfaces\AtomicMigrationInterface;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\ReadonlyField;
+use SilverStripe\ORM\FieldType\DBField;
 
 trait AtomicMigrationModelTrait
 {
-    public function getCMSFields()
+    public function getCMSFields(): FieldList
     {
         $fields = parent::getCMSFields();
-        foreach ($this->config()->casting as $fieldName => $fieldType) {
+        $casting = $this->config()->get('casting');
+        if (! $casting) {
+            return $fields;
+        }
+
+        foreach ($casting as $fieldName => $fieldType) {
             $method = 'get' . $fieldName;
+            if (! method_exists($this, $method)) {
+                continue;
+            }
+
             $value = $this->$method();
             $fields->addFieldsToTab(
                 'Root.Main',
@@ -21,11 +30,11 @@ trait AtomicMigrationModelTrait
                         $fieldName . 'Nice',
                         $fieldName,
                         DBField::create_field($fieldType, $value)->Nice()
-                    )
+                    ),
                 ]
             );
         }
+
         return $fields;
     }
-
 }
