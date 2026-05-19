@@ -1,1 +1,4 @@
 
+Sunnysideup\DatabaseMigrations\Interfaces\AtomicMigrationApi:
+  also_run:
+    - NotMyTaskButKeenToRunItBuildTask

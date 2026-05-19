@@ -1,51 +1,40 @@
 {
-  "name": "sunnysideup/database-migrations",
-  "description": "Add an Atomic Migration interface to any BuildTask and it will automatically run them on dev/build and record that they have run in the database.'",
-  "type": "silverstripe-vendormodule",
-  "keywords": [
-    "atomic",
-    "upgrade",
-    "migrate",
-    "convert",
-    "database migration",
-    "dev tool",
-    "reliable",
-    "up and downgrade"
-  ],
-  "license": "BSD-3-Clause",
-  "require": {
-    "silverstripe/framework": "^5.0",
-    "silverstripe/admin": "^2.0"
-  },
-  "require-dev": {
-    "sunnysideup/sswebpack_engine_only": "5.x-dev",
-    "silverleague/ideannotator": "*",
-    "phpunit/phpunit": "^9.6",
-    "squizlabs/php_codesniffer": "^3.7",
-    "silverstripe/standards": "^1",
-    "phpstan/extension-installer": "^1.3"
-  },
-  "autoload": {
-    "psr-4": {
-      "Sunnysideup\\DatabaseMigrations\\": "src/"
-    }
-  },
-  "extra": {
-    "expose": [
-      "client/dist"
+    "name": "sunnysideup/database-migrations",
+    "description": "Add an Atomic Migration interface to any BuildTask and it will automatically run them on dev/build and record that they have run in the database.",
+    "type": "silverstripe-vendormodule",
+    "keywords": [
+        "atomic",
+        "upgrade",
+        "migrate",
+        "convert",
+        "database migration",
+        "dev tool",
+        "reliable",
+        "up and downgrade"
+    ],
+    "license": "BSD-3-Clause",
+    "require": {
+        "silverstripe/framework": "^5.0",
+        "silverstripe/admin": "^2.0"
+    },
+    "require-dev": {},
+    "autoload": {
+        "psr-4": {
+            "Sunnysideup\\DatabaseMigrations\\": "src/"
+        }
+    },
+    "extra": {
+        "expose": [
+            "client/dist"
+        ]
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "authors": [
+        {
+            "name": "Nicolaas Thiemen Francken",
+            "email": "modules@sunnysideup.co.nz",
+            "role": "lead developer"
+        }
     ]
-  },
-  "minimum-stability": "dev",
-  "prefer-stable": true,
-  "bin": [
-    "bin/sake-npm-build-database-migrations.sh",
-    "bin/sake-npm-watch-database-migrations.sh"
-  ],
-  "authors": [
-    {
-      "name": "Nicolaas Thiemen Francken",
-      "email": "modules@sunnysideup.co.nz",
-      "role": "lead developer"
-    }
-  ]
 }
