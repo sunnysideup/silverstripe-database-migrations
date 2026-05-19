@@ -16,6 +16,10 @@ class AtomicMigrationModel extends DataObject
 
     private static string $table_name = 'AtomicMigrationModel';
 
+    private static string $singular_name = 'Migration Task';
+
+    private static string $plural_name = 'Migration Tasks';
+
     private static array $db = [
         'Title' => 'Varchar',
         'TaskClassName' => 'Varchar(255)',
@@ -23,6 +27,8 @@ class AtomicMigrationModel extends DataObject
         'URLSegment' => 'Varchar',
         'CurrentHash' => 'Varchar',
     ];
+
+    private static string $default_sort = 'Created ID';
 
     private static array $has_many = [
         'Attempts' => AtomicMigrationModelAttempt::class,
@@ -34,18 +40,22 @@ class AtomicMigrationModel extends DataObject
         'HasRunSuccessfully' => 'Boolean',
         'HasRunWithCurrentClassConfiguration' => 'Boolean',
         'HasRunSuccessfullyWithCurrentClassConfiguration' => 'Boolean',
+        'StatusMessage' => 'Varchar',
+        'Status' => 'Varchar',
     ];
 
     private static array $indexes = [
         'URLSegment' => true,
         'TaskClassName' => true,
+        'CurrentHash' => true,
     ];
 
     private static array $summary_fields = [
         'Title' => 'Title',
         'TaskClassName' => 'Task Class',
-        'HasRunSuccessfully' => 'Successful',
+        'Status' => 'Status',
         'NumberOfAttempts' => 'Attempts',
+        'Created' => 'Created',
     ];
 
     public static function find_or_create(string $className): self
@@ -60,21 +70,6 @@ class AtomicMigrationModel extends DataObject
         return $model;
     }
 
-    public function canCreate($member = null, $context = []): bool
-    {
-        return false;
-    }
-
-    public function canEdit($member = null, $context = []): bool
-    {
-        return false;
-    }
-
-    public function canDelete($member = null): bool
-    {
-        return false;
-    }
-
     public function requireDefaultRecords(): void
     {
         parent::requireDefaultRecords();
@@ -82,12 +77,19 @@ class AtomicMigrationModel extends DataObject
         foreach ($list as $array) {
             $task = $array['Task'];
             $model = $array['Model'];
+
+            // Skip if already run successfully with current configuration
             if ($model->getHasRunSuccessfullyWithCurrentClassConfiguration() === true) {
                 continue;
             }
-            if ($task instanceof AtomicMigrationInterface && ! $task->canRunAgainOnFailure()) {
-                continue;
+
+            // Skip if task has failed before and cannot run again
+            if ($task instanceof AtomicMigrationInterface) {
+                if ($model->getHasRun() && ! $model->getHasRunSuccessfully() && ! $task->canRunAgainOnFailure()) {
+                    continue;
+                }
             }
+
             $attempt = AtomicMigrationModelAttempt::start_new_attempt($model);
             try {
                 $task->run(null);
@@ -105,6 +107,29 @@ class AtomicMigrationModel extends DataObject
     {
         parent::onBeforeWrite();
         $this->CurrentHash = $this->getCurrentHash();
+
+        // Auto-populate Title from class name if not set
+        if (! $this->Title && $this->TaskClassName) {
+            $task = Injector::inst()->get($this->TaskClassName);
+            if ($task) {
+                $this->Title = $task->getTitle();
+                $this->Description = $task->getDescription();
+            }
+        }
+
+        // Auto-populate URLSegment if not set
+        if (! $this->URLSegment && $this->TaskClassName) {
+            $task = Injector::inst()->get($this->TaskClassName);
+            $this->URLSegment = $task?->config()->get('segment');
+            if (! $this->URLSegment) {
+                $this->URLSegment = str_replace('\\', '-', $this->TaskClassName);
+            }
+        }
+    }
+
+    public function getTitle(): string
+    {
+        return $this->getField('Title') ?: $this->TaskClassName;
     }
 
     public function getNumberOfAttempts(): int
@@ -139,6 +164,56 @@ class AtomicMigrationModel extends DataObject
             return '';
         }
 
-        return md5_file($file);
+        $hash = md5_file($file);
+
+        return $hash !== false ? $hash : '';
+    }
+
+    /**
+     * Get the last attempt for this migration
+     */
+    public function getLastAttempt(): ?AtomicMigrationModelAttempt
+    {
+        return $this->Attempts()->sort('Created DESC')->first();
+    }
+
+    /**
+     * Get a nice status message for display
+     */
+    public function getStatusMessage(): string
+    {
+        if (! $this->getHasRun()) {
+            return 'Not yet run';
+        }
+
+        if ($this->getHasRunSuccessfullyWithCurrentClassConfiguration()) {
+            return 'Successfully run (current version)';
+        }
+
+        if ($this->getHasRunSuccessfully()) {
+            return 'Successfully run (outdated version)';
+        }
+
+        return 'Failed';
+    }
+
+    /**
+     * Get nice status for gridfield/display
+     */
+    public function getStatus(): string
+    {
+        if (! $this->getHasRun()) {
+            return 'Pending';
+        }
+
+        if ($this->getHasRunSuccessfullyWithCurrentClassConfiguration()) {
+            return 'Success';
+        }
+
+        if ($this->getHasRunSuccessfully()) {
+            return 'Outdated';
+        }
+
+        return 'Failed';
     }
 }

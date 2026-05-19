@@ -11,12 +11,18 @@ class AtomicMigrationModelAttempt extends DataObject
 
     private static string $table_name = 'AtomicMigrationModelAttempt';
 
+    private static string $singular_name = 'Migration Attempt';
+
+    private static string $plural_name = 'Migration Attempts';
+
     private static array $db = [
         'FileHash' => 'Varchar',
         'Successful' => 'Boolean',
         'Completed' => 'Boolean',
         'ErrorMessage' => 'Text',
     ];
+
+    private static string $default_sort = 'Created DESC';
 
     private static array $has_one = [
         'Task' => AtomicMigrationModel::class,
@@ -36,7 +42,7 @@ class AtomicMigrationModelAttempt extends DataObject
 
     public static function start_new_attempt(AtomicMigrationModel $model): self
     {
-        $me = static::create();
+        $me = self::create();
         $me->TaskID = $model->ID;
         $me->write();
 

@@ -37,4 +37,18 @@ trait AtomicMigrationModelTrait
 
         return $fields;
     }
+    public function canCreate($member = null, $context = []): bool
+    {
+        return false;
+    }
+
+    public function canEdit($member = null, $context = []): bool
+    {
+        return false;
+    }
+
+    public function canDelete($member = null): bool
+    {
+        return false;
+    }
 }
