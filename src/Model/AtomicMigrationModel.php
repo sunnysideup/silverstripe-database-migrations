@@ -3,6 +3,7 @@
 namespace Sunnysideup\DatabaseMigrations\Model;
 
 use Exception;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
@@ -28,7 +29,7 @@ class AtomicMigrationModel extends DataObject
         'CurrentHash' => 'Varchar',
     ];
 
-    private static string $default_sort = 'Created ID';
+    private static string $default_sort = 'ID DESC';
 
     private static array $has_many = [
         'Attempts' => AtomicMigrationModelAttempt::class,
@@ -77,31 +78,42 @@ class AtomicMigrationModel extends DataObject
         foreach ($list as $array) {
             $task = $array['Task'];
             $model = $array['Model'];
-
-            // Skip if already run successfully with current configuration
-            if ($model->getHasRunSuccessfullyWithCurrentClassConfiguration() === true) {
-                continue;
-            }
-
-            // Skip if task has failed before and cannot run again
-            if ($task instanceof AtomicMigrationInterface) {
-                if ($model->getHasRun() && ! $model->getHasRunSuccessfully() && ! $task->canRunAgainOnFailure()) {
-                    continue;
-                }
-            }
-
             $attempt = AtomicMigrationModelAttempt::start_new_attempt($model);
-            try {
-                $task->run(null);
-                $attempt->Successful = true;
-                $attempt->Completed = true;
-            } catch (Exception $e) {
-                $attempt->ErrorMessage = $e->getMessage();
-                $attempt->Completed = true;
+            if ($model->getShouldRun()) {
+                try {
+                    $task->run(null);
+                    $attempt->Successful = true;
+                    $attempt->Completed = true;
+                } catch (Exception $e) {
+                    $attempt->ErrorMessage = $e->getMessage();
+                    $attempt->Completed = true;
+                }
             }
             $attempt->write();
         }
     }
+
+    public function getShouldRun(): bool
+    {
+
+        // Skip if already run successfully with current configuration
+        if ($this->getHasRunSuccessfullyWithCurrentClassConfiguration() === true) {
+            return false;
+        }
+
+        // Skip if task has failed before and cannot run again
+        $task = Injector::inst()->get($this->TaskClassName);
+        if ($task instanceof AtomicMigrationInterface) {
+            if ($this->getHasRun() && ! $this->getHasRunSuccessfully() && ! $task->canRunAgainOnFailure()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+    * Get a nice status message for display
+    */
 
     public function onBeforeWrite(): void
     {
