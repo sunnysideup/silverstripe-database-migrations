@@ -11,7 +11,7 @@ This module provides an automatic migration system for SilverStripe that ensures
 - **Automatic Execution**: Migrations run automatically during `dev/build`
 - **Run Once or On Update**: Choose whether tasks run once ever, or re-run when the file changes
 - **Tracking**: Records all migration attempts with success/failure status
-- **Admin Interface**: View migration history in the CMS at `/admin/atomic-migration-admin`
+- **Admin Interface**: View migration history in the CMS at `/admin/atomic-migration-admin`, but only when you are logged-in as default admin.
 - **File Hash Tracking**: Detects when migration code changes and can re-run if needed
 - **Error Handling**: Captures and stores error messages for failed migrations
 
