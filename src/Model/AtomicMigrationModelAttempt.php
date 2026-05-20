@@ -22,7 +22,7 @@ class AtomicMigrationModelAttempt extends DataObject
         'ErrorMessage' => 'Text',
     ];
 
-    private static string $default_sort = 'Created DESC';
+    private static string $default_sort = 'ID DESC';
 
     private static array $has_one = [
         'Task' => AtomicMigrationModel::class,
