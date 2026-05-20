@@ -243,24 +243,6 @@ If the file hash keeps changing:
 
 ## Advanced Configuration
 
-### Disable Automatic Running
-
-If you want to manually control when migrations run:
-
-```php
-<?php
-
-use Sunnysideup\DatabaseMigrations\Model\AtomicMigrationModel;
-
-class DisableAutoMigrations
-{
-    public function onBeforeBuild()
-    {
-        // Temporarily disable by overriding the method
-        AtomicMigrationModel::config()->set('run_on_build', false);
-    }
-}
-```
 
 ### Custom Admin Permissions
 
