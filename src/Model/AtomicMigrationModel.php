@@ -63,9 +63,13 @@ class AtomicMigrationModel extends DataObject
     {
         $filter = ['TaskClassName' => $className];
         $model = self::get()->filter($filter)->first();
+        $task = Injector::inst()->get($className);
         if (! $model) {
             $model = self::create($filter);
+            $model->Title = $task?->getTitle() ?: $className;
+            $model->Description = $task?->getDescription() ?: '';
             $model->write();
+
         }
 
         return $model;
