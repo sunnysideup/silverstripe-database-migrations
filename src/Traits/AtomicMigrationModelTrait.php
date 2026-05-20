@@ -17,6 +17,9 @@ trait AtomicMigrationModelTrait
         }
 
         foreach ($casting as $fieldName => $fieldType) {
+            if ($fieldName === 'Title') {
+                continue;
+            }
             $method = 'get' . $fieldName;
             if (! method_exists($this, $method)) {
                 continue;
