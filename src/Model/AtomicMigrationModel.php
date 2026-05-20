@@ -129,7 +129,7 @@ class AtomicMigrationModel extends DataObject
         }
         if (! $this->Description && $this->TaskClassName) {
             if ($task) {
-                $this->Description = $task::getDescription();
+                $this->Description = $task->getDescription();
             }
         }
 
