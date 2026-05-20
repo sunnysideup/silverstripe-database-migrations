@@ -35,18 +35,5 @@ class AtomicMigrationAdmin extends ModelAdmin
         return DefaultAdminService::isDefaultAdmin($member->Email);
     }
 
-    public function canEdit($member = null): bool
-    {
-        return false;
-    }
 
-    public function canDelete($member = null): bool
-    {
-        return false;
-    }
-
-    public function canCreate($member = null): bool
-    {
-        return false;
-    }
 }
