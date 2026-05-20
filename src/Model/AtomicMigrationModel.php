@@ -56,7 +56,7 @@ class AtomicMigrationModel extends DataObject
         'TaskClassName' => 'Task Class',
         'Status' => 'Status',
         'NumberOfAttempts' => 'Attempts',
-        'Created' => 'Created',
+        'Created.Ago' => 'Created',
     ];
 
     public static function find_or_create(string $className): self

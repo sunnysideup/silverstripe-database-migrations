@@ -34,10 +34,10 @@ class AtomicMigrationModelAttempt extends DataObject
     ];
 
     private static array $summary_fields = [
-        'Created' => 'Date',
+        'Created.Ago' => 'Date',
         'Title' => 'Title',
-        'Successful' => 'Success',
-        'IsCurrent' => 'Current',
+        'Successful.Nice' => 'Success',
+        'IsCurrent.Nice' => 'Current',
     ];
 
     public static function start_new_attempt(AtomicMigrationModel $model): self

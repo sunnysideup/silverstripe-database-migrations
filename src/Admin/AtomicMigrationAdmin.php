@@ -11,9 +11,9 @@ use Sunnysideup\DatabaseMigrations\Model\AtomicMigrationModelAttempt;
 
 class AtomicMigrationAdmin extends ModelAdmin
 {
-    private static string $url_segment = 'atomic-migration-admin';
+    private static string $url_segment = 'database-migration-admin';
 
-    private static string $menu_title = 'Atomic Migrations';
+    private static string $menu_title = 'Database Migrations';
 
     private static string $menu_icon_class = 'font-icon-database';
 
