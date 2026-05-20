@@ -23,13 +23,17 @@ trait AtomicMigrationModelTrait
             }
 
             $value = $this->$method();
+            $dbField = DBField::create_field($fieldType, $value);
+            if ($dbField->hasMethod('Nice')) {
+                $value = $dbField->Nice();
+            }
             $fields->addFieldsToTab(
                 'Root.Main',
                 [
                     ReadonlyField::create(
                         $fieldName . 'Nice',
                         $fieldName,
-                        DBField::create_field($fieldType, $value)->Nice()
+                        $value
                     ),
                 ]
             );

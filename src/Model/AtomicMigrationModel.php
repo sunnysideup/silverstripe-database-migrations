@@ -121,17 +121,20 @@ class AtomicMigrationModel extends DataObject
         $this->CurrentHash = $this->getCurrentHash();
 
         // Auto-populate Title from class name if not set
+        $task = Injector::inst()->get($this->TaskClassName);
         if (! $this->Title && $this->TaskClassName) {
-            $task = Injector::inst()->get($this->TaskClassName);
             if ($task) {
                 $this->Title = $task->getTitle();
-                $this->Description = $task->getDescription();
+            }
+        }
+        if (! $this->Description && $this->TaskClassName) {
+            if ($task) {
+                $this->Description = $task::getDescription();
             }
         }
 
         // Auto-populate URLSegment if not set
         if (! $this->URLSegment && $this->TaskClassName) {
-            $task = Injector::inst()->get($this->TaskClassName);
             $this->URLSegment = $task?->config()->get('segment');
             if (! $this->URLSegment) {
                 $this->URLSegment = str_replace('\\', '-', $this->TaskClassName);
