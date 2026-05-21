@@ -112,7 +112,7 @@ class AtomicMigrationModel extends DataObject
                 return false;
             }
         }
-        return true;
+        return (bool) $task->isEnabled() === true;
     }
 
     /**
