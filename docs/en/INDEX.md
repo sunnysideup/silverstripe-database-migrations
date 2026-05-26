@@ -47,6 +47,15 @@ class MyUpgradeTask extends BuildTask implements AtomicMigrationInterface
     protected $title = 'My Upgrade Task';
     
     protected $description = 'Migrates old data to new format';
+
+    /**
+     * Lower numbers are done before higher numbers.
+     * The default number is 0.
+     */
+    public function getSortAtomicMigrationSortNumber(): int
+    {
+        return -1000;
+    }
     
     public function run($request)
     {
@@ -111,6 +120,7 @@ Sunnysideup\DatabaseMigrations\Api\AtomicMigrationApi:
 ### File Hash Tracking
 
 The module calculates an MD5 hash of your migration task file. If you update the task code:
+
 - The hash changes
 - The migration will run again (even if it succeeded before)
 - This is useful for migrations that need to run multiple times as you refine them

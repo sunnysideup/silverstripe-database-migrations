@@ -30,11 +30,18 @@ class AtomicMigrationApi
         foreach ($list as $className) {
             $task = Injector::inst()->get($className);
             $model = AtomicMigrationModel::find_or_create($className);
+            $sortNumber = method_exists($task, 'getSortAtomicMigrationSortNumber') ? $task->getSortAtomicMigrationSortNumber() : 0;
             $array[] = [
                 'ClassName' => $className,
                 'Model' => $model,
                 'Task' => $task,
+                'SortNumber' => $sortNumber,
             ];
+            array_multisort(
+                array_column($array, 'SortNumber'),
+                SORT_ASC,
+                $array
+            );
         }
 
         return $array;
