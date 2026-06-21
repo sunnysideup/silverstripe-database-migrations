@@ -24,29 +24,42 @@ class AtomicMigrationApi
     public function getListOfMigrationTasks(): array
     {
         $array = [];
-        $list = ClassInfo::implementorsOf(AtomicMigrationInterface::class);
-        $list = array_merge(
-            $list,
-            $this->config()->get('also_run') ?? []
-        );
-        foreach ($list as $className) {
-            $task = Injector::inst()->get($className);
-            $model = AtomicMigrationModel::find_or_create($className);
-            $sortNumber = method_exists($task, 'getSortAtomicMigrationSortNumber') ? $task->getSortAtomicMigrationSortNumber() : 0;
-            $array[] = [
-                'ClassName' => $className,
-                'Model' => $model,
-                'Task' => $task,
-                'SortNumber' => $sortNumber,
-            ];
-            array_multisort(
-                array_column($array, 'SortNumber'),
-                SORT_ASC,
-                $array
-            );
+
+        // Implementors have no explicit sort key → fall back to the task's own number.
+        foreach (ClassInfo::implementorsOf(AtomicMigrationInterface::class) as $className) {
+            $array[] = $this->buildMigrationTaskEntry($className, null);
         }
 
+        // also_run: the keys ARE the sort numbers, so iterate it directly (no array_merge).
+        foreach ($this->config()->get('also_run') ?? [] as $sort => $className) {
+            $array[] = $this->buildMigrationTaskEntry($className, (int) $sort);
+        }
+
+        array_multisort(
+            array_column($array, 'SortNumber'),
+            SORT_ASC,
+            $array
+        );
+
         return $array;
+    }
+
+    private function buildMigrationTaskEntry(string $className, ?int $sort): array
+    {
+        $task = Injector::inst()->get($className);
+        $model = AtomicMigrationModel::find_or_create($className);
+
+        $sortNumber = $sort
+            ?? (method_exists($task, 'getSortAtomicMigrationSortNumber')
+                ? $task->getSortAtomicMigrationSortNumber()
+                : 0);
+
+        return [
+            'ClassName' => $className,
+            'Model' => $model,
+            'Task' => $task,
+            'SortNumber' => (int) $sortNumber,
+        ];
     }
 
     public static function inst(): self
