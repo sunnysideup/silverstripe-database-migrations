@@ -2,6 +2,7 @@
 
 namespace Sunnysideup\DatabaseMigrations\Api;
 
+use Exception;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extensible;
@@ -10,6 +11,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Manifest\ClassLoader;
 use Sunnysideup\DatabaseMigrations\Interfaces\AtomicMigrationInterface;
 use Sunnysideup\DatabaseMigrations\Model\AtomicMigrationModel;
+use Sunnysideup\DatabaseMigrations\Model\AtomicMigrationModelAttempt;
 
 class AtomicMigrationApi
 {
@@ -50,6 +52,37 @@ class AtomicMigrationApi
     public static function inst(): self
     {
         return Injector::inst()->get(static::class);
+    }
+
+    public function run()
+    {
+        $list = AtomicMigrationApi::inst()->getListOfMigrationTasks();
+        foreach ($list as $array) {
+            $attempt = null;
+            $task = $array['Task'];
+            $model = $array['Model'];
+            if ($model->getShouldRun()) {
+                $attempt = AtomicMigrationModelAttempt::start_new_attempt($model);
+                try {
+                    $task->run(null);
+                    $attempt->Successful = true;
+                    $attempt->Completed = true;
+                } catch (Exception $e) {
+                    $attempt->ErrorMessage = $e->getMessage();
+                    $attempt->Completed = true;
+                    $attempt->write();
+                    echo PHP_EOL . 'ERROR: ' . $e->getMessage() . PHP_EOL;
+                    echo PHP_EOL . 'Task: ' . $task->getTitle() . PHP_EOL;
+                }
+            } else {
+                if ($model->getHasRunSuccessfullyWithCurrentClassConfiguration() !== true) {
+                    $attempt = AtomicMigrationModelAttempt::start_new_attempt($model);
+                }
+            }
+            if ($attempt) {
+                $attempt->write();
+            }
+        }
     }
 
     public function classNameToPath(string $className): ?string

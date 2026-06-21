@@ -78,23 +78,7 @@ class AtomicMigrationModel extends DataObject
     public function requireDefaultRecords(): void
     {
         parent::requireDefaultRecords();
-        $list = AtomicMigrationApi::inst()->getListOfMigrationTasks();
-        foreach ($list as $array) {
-            $task = $array['Task'];
-            $model = $array['Model'];
-            $attempt = AtomicMigrationModelAttempt::start_new_attempt($model);
-            if ($model->getShouldRun()) {
-                try {
-                    $task->run(null);
-                    $attempt->Successful = true;
-                    $attempt->Completed = true;
-                } catch (Exception $e) {
-                    $attempt->ErrorMessage = $e->getMessage();
-                    $attempt->Completed = true;
-                }
-            }
-            $attempt->write();
-        }
+        AtomicMigrationApi::inst()->run();
     }
 
     public function getShouldRun(): bool
@@ -178,6 +162,9 @@ class AtomicMigrationModel extends DataObject
 
     public function getCurrentHash(): string
     {
+        if (! $this->TaskClassName) {
+            return '';
+        }
         $file = AtomicMigrationApi::inst()->classNameToPath($this->TaskClassName);
         if (! $file || ! file_exists($file)) {
             return '';
