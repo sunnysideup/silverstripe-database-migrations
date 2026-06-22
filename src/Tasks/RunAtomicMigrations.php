@@ -19,11 +19,13 @@ class RunAtomicMigrations extends BuildTask
 
     protected $description = 'Runs all atomic migrations.';
 
+    private static bool $dry_run_only = false;
 
     public function run($request)
     {
+        $dryRunOnly = $request->getVar('dryrunonly') || $this->config()->get('dry_run_only');
         DB::alteration_message('Running atomic migrations', 'created');
-        AtomicMigrationApi::inst()->run();
+        AtomicMigrationApi::inst()->run($dryRunOnly);
         DB::alteration_message('Finished running atomic migrations', 'created');
     }
 }

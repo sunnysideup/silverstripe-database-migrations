@@ -31,7 +31,13 @@ class AtomicMigrationApi
         }
 
         // also_run: the keys ARE the sort numbers, so iterate it directly (no array_merge).
-        foreach ($this->config()->get('also_run') ?? [] as $sort => $className) {
+        foreach ($this->config()->get('also_run') ?? [] as $className => $sort) {
+            if (!class_exists($className) && class_exists($sort)) {
+                $sortNew = $className;
+                $className = $sort;
+                $sort = $sortNew;
+                unset($sortNew);
+            }
             $array[] = $this->buildMigrationTaskEntry($className, (int) $sort);
         }
 
@@ -70,14 +76,19 @@ class AtomicMigrationApi
     public function run(?bool $dryRunOnly = false)
     {
         $list = AtomicMigrationApi::inst()->getListOfMigrationTasks();
+        $hasTasks = false;
         foreach ($list as $array) {
             $attempt = null;
             $task = $array['Task'];
             $model = $array['Model'];
             if ($model->getShouldRun()) {
+                $hasTasks = true;
+                $link = $task->config()->get('segment') ?: $task->config()->get('commandName');
                 if ($dryRunOnly) {
-                    echo 'NB!!!
-                        Please run: vendor/bin/sake dev/tasks/run-atomic-migrations flush=all to run: ' . $task->getTitle() . PHP_EOL;
+                    echo PHP_EOL.
+                        'NB!!! Please run: vendor/bin/sake ' . $link .
+                        PHP_EOL. ' => #' . $array['SortNumber'] . ': ' . $task->getTitle() .
+                        PHP_EOL . ' => ' . $task->getDescription() . PHP_EOL. PHP_EOL;
                     continue;
                 }
                 $attempt = AtomicMigrationModelAttempt::start_new_attempt($model);
@@ -100,6 +111,9 @@ class AtomicMigrationApi
             if ($attempt) {
                 $attempt->write();
             }
+        }
+        if ($hasTasks && $dryRunOnly) {
+            echo PHP_EOL . 'NB!!! Please run: vendor/bin/sake dev/tasks/atomic-migration flush=all to run all database migration tasks.' . PHP_EOL. PHP_EOL;
         }
     }
 

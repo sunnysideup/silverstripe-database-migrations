@@ -102,8 +102,8 @@ After:
 ---
 Sunnysideup\DatabaseMigrations\Api\AtomicMigrationApi:
   also_run:
-    10: Vendor\Module\Tasks\SomeThirdPartyTask
-    20: AnotherVendor\AnotherModule\Tasks\AnotherTask
+     Vendor\Module\Tasks\SomeThirdPartyTask: 10
+     AnotherVendor\AnotherModule\Tasks\AnotherTask: 20
 ```
 
 **Note:** Tasks added via configuration don't support the `canRunAgainOnFailure()` check, so they will always attempt to re-run if they failed.
