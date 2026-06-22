@@ -67,7 +67,7 @@ class AtomicMigrationApi
         return Injector::inst()->get(static::class);
     }
 
-    public function run()
+    public function run(?bool $dryRunOnly = false)
     {
         $list = AtomicMigrationApi::inst()->getListOfMigrationTasks();
         foreach ($list as $array) {
@@ -75,6 +75,11 @@ class AtomicMigrationApi
             $task = $array['Task'];
             $model = $array['Model'];
             if ($model->getShouldRun()) {
+                if ($dryRunOnly) {
+                    echo 'NB!!!
+                        Please run: vendor/bin/sake dev/tasks/run-atomic-migrations flush=all to run: ' . $task->getTitle() . PHP_EOL;
+                    continue;
+                }
                 $attempt = AtomicMigrationModelAttempt::start_new_attempt($model);
                 try {
                     $task->run(null);

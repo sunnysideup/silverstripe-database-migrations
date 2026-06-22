@@ -78,7 +78,7 @@ class AtomicMigrationModel extends DataObject
     public function requireDefaultRecords(): void
     {
         parent::requireDefaultRecords();
-        AtomicMigrationApi::inst()->run();
+        AtomicMigrationApi::inst()->run(true);
     }
 
     public function getShouldRun(): bool
