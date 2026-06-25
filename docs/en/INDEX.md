@@ -239,6 +239,7 @@ public function canRunAgainOnFailure(): bool
 ### Migration Keeps Running
 
 If the file hash keeps changing:
+
 - Ensure you're not using dynamic code that changes on every execution
 - Check your editor isn't modifying line endings or whitespace
 
