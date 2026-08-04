@@ -212,7 +212,7 @@ class AtomicMigrationModel extends DataObject
     public function getStatus(): string
     {
         if (! $this->getHasRun()) {
-            return 'Pending';
+            return 'Not yet run';
         }
 
         if ($this->getHasRunSuccessfullyWithCurrentClassConfiguration()) {
@@ -223,6 +223,6 @@ class AtomicMigrationModel extends DataObject
             return 'Outdated';
         }
 
-        return 'Failed';
+        return 'Pending';
     }
 }
