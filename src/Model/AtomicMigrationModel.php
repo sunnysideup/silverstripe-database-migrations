@@ -3,12 +3,14 @@
 namespace Sunnysideup\DatabaseMigrations\Model;
 
 use Exception;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
 use Sunnysideup\DatabaseMigrations\Api\AtomicMigrationApi;
 use Sunnysideup\DatabaseMigrations\Interfaces\AtomicMigrationInterface;
+use Sunnysideup\DatabaseMigrations\Tasks\RunAtomicMigrations;
 use Sunnysideup\DatabaseMigrations\Traits\AtomicMigrationModelTrait;
 
 class AtomicMigrationModel extends DataObject
@@ -78,7 +80,8 @@ class AtomicMigrationModel extends DataObject
     public function requireDefaultRecords(): void
     {
         parent::requireDefaultRecords();
-        AtomicMigrationApi::inst()->run(true);
+        $dryRunOnly = Config::inst()->get(RunAtomicMigrations::class, 'dry_run_only');
+        AtomicMigrationApi::inst()->run($dryRunOnly);
     }
 
     public function getShouldRun(): bool

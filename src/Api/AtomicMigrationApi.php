@@ -88,7 +88,8 @@ class AtomicMigrationApi
                     echo PHP_EOL.
                         'NB!!! Please run: vendor/bin/sake ' . $link .
                         PHP_EOL. ' => #' . $array['SortNumber'] . ': ' . $task->getTitle() .
-                        PHP_EOL . ' => ' . $task->getDescription() . PHP_EOL. PHP_EOL;
+                        PHP_EOL . ' => ' . $task->getDescription() . PHP_EOL. PHP_EOL  .
+                        PHP_EOL . ' => to run all tasks (recommended), please run: vendor/bin/sake run-atomic-migrations' . PHP_EOL . PHP_EOL;
                     continue;
                 }
                 $attempt = AtomicMigrationModelAttempt::start_new_attempt($model);
