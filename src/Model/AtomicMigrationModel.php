@@ -59,6 +59,22 @@ class AtomicMigrationModel extends DataObject
         'Created.Ago' => 'Created',
     ];
 
+    private static array $field_labels = [
+        'Title' => 'Name of migration',
+        'TaskClassName' => 'Task Class',
+        'Description' => 'Description',
+        'URLSegment' => 'URL Segment',
+        'CurrentHash' => 'Current Hash',
+        'NumberOfAttempts' => 'Number of Attempts',
+        'HasRun' => 'Has Run Already',
+        'HasRunSuccessfully' => 'Has Run Successfully',
+        'HasRunWithCurrentClassConfiguration' => 'Has Run With Current Class Configuration',
+        'HasRunSuccessfullyWithCurrentClassConfiguration' => 'Has Run Successfully With Current Class Configuration',
+        'StatusMessage' => 'Status Message',
+        'Status' => 'Status',
+
+    ];
+
     public static function find_or_create(string $className): self
     {
         $filter = ['TaskClassName' => $className];
@@ -78,7 +94,7 @@ class AtomicMigrationModel extends DataObject
     public function requireDefaultRecords(): void
     {
         parent::requireDefaultRecords();
-        AtomicMigrationApi::inst()->run(true);
+        AtomicMigrationApi::inst()->run(false);
     }
 
     public function getShouldRun(): bool

@@ -5,6 +5,7 @@ namespace Sunnysideup\DatabaseMigrations\Traits;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\ORM\FieldType\DBField;
+use SilverStripe\ORM\FieldType\DBHTMLText;
 
 trait AtomicMigrationModelTrait
 {
@@ -41,6 +42,21 @@ trait AtomicMigrationModelTrait
                 ]
             );
         }
+
+        $fields->addFieldsToTab(
+            'Root.RunNow',
+            [
+                ReadonlyField::create(
+                    'RunNowCurrentHash',
+                    'Run All Uncompleted Migrations',
+                    DBHTMLText::create_field(
+                        'HTMLText',
+                        '<a href="/dev/tasks/run-atomic-migrations" target="_blank">Run All Uncompleted Migrations</a>'
+                    )
+                )
+                    ->setDescription('On the command line you can run: vendor/bin/sake dev/tasks/run-atomic-migrations')
+            ]
+        );
 
         return $fields;
     }
